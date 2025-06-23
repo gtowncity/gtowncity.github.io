@@ -2,129 +2,37 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Wetterseite – Live Wetterdaten</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    :root {
-      color-scheme: light dark;
+  <title>Debug Wetterseite</title>
+  <script>
+    async function testCoords() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(async pos => {
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+          const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&timezone=auto`;
+          console.log("Lade URL:", url);
+
+          try {
+            const res = await fetch(url);
+            const json = await res.json();
+            console.log("Antwort JSON:", json);
+            document.body.innerHTML = `<pre>${JSON.stringify(json, null, 2)}</pre>`;
+          } catch (e) {
+            console.error("Fetch-Fehler:", e);
+            document.body.innerHTML = `<p style='color:red;'>Fehler beim Abrufen: ${e.message}</p>`;
+          }
+        }, err => {
+          console.error("Geo-Fehler:", err);
+          document.body.innerHTML = `<p style='color:red;'>Geolocation fehlgeschlagen: ${err.message}</p>`;
+        });
+      } else {
+        document.body.innerHTML = "Geolocation nicht unterstützt.";
+      }
     }
-    body {
-      font-family: Arial, sans-serif;
-      background: linear-gradient(to bottom, #cce3f7, #f2f9ff);
-      padding: 20px;
-      margin: 0;
-      transition: background 0.3s;
-    }
-    h1 {
-      color: #2c3e50;
-      text-align: center;
-    }
-    #wetter, #vorhersage, #chartContainer {
-      max-width: 500px;
-      margin: 30px auto;
-      background: #fff;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    .label { font-weight: bold; }
-    footer {
-      text-align: center;
-      margin-top: 40px;
-      font-size: 0.8em;
-      color: #555;
-    }
-    canvas {
-      max-width: 100%;
-    }
-  </style>
+    window.onload = testCoords;
+  </script>
 </head>
 <body>
-  <h1>🌤 Wetter an deinem Standort</h1>
-  <div id="wetter"><p>Wetterdaten werden geladen...</p></div>
-  <div id="vorhersage"><p>Vorhersage wird geladen...</p></div>
-  <div id="chartContainer"><canvas id="tempChart"></canvas></div>
-
-  <footer>
-    Datenquelle: <a href="https://open-meteo.com" target="_blank">Open-Meteo.com</a><br>
-    Modell: ICON (bereitgestellt vom DWD)
-  </footer>
-
-  <script>
-    function wetterSymbol(code) {
-      const map = {
-        0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️", 45: "🌫️", 48: "🌫️",
-        51: "🌦️", 61: "🌧️", 63: "🌧️", 65: "🌧️", 80: "🌧️",
-        71: "❄️", 73: "❄️", 75: "❄️", 95: "🌩️", 99: "🌩️"
-      };
-      return map[code] || "❔";
-    }
-
-    function formatDate(iso) {
-      const d = new Date(iso);
-      return d.toLocaleDateString("de-DE", { weekday: 'short', day: '2-digit', month: '2-digit' });
-    }
-
-    function getLocationAndLoadWeather() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(pos => {
-          ladeWetter(pos.coords.latitude, pos.coords.longitude);
-        }, () => ladeWetter(48.8, 11.5)); // fallback
-      } else {
-        ladeWetter(48.8, 11.5);
-      }
-    }
-
-    async function ladeWetter(lat, lon) {
-      try {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&daily=temperature_2m_min,temperature_2m_max,weathercode&hourly=temperature_2m&timezone=auto`;
-        const res = await fetch(url);
-        const data = await res.json();
-
-        const aktuell = data.current_weather;
-        document.getElementById("wetter").innerHTML = `
-          <p><span class="label">Temperatur:</span> ${aktuell.temperature} °C</p>
-          <p><span class="label">Wind:</span> ${aktuell.windspeed} km/h</p>
-          <p><span class="label">Zeit:</span> ${new Date(aktuell.time).toLocaleString()}</p>
-        `;
-
-        // 3-Tage-Vorhersage
-        let forecastHTML = "<h3>3-Tage-Vorhersage</h3>";
-        for (let i = 0; i < 3; i++) {
-          forecastHTML += `<p>${formatDate(data.daily.time[i])}: ${wetterSymbol(data.daily.weathercode[i])} ${data.daily.temperature_2m_min[i]}–${data.daily.temperature_2m_max[i]} °C</p>`;
-        }
-        document.getElementById("vorhersage").innerHTML = forecastHTML;
-
-        // Temperaturverlauf
-        const labels = data.hourly.time.slice(0, 24).map(t => t.split("T")[1].slice(0,5));
-        const temps = data.hourly.temperature_2m.slice(0, 24);
-
-        new Chart(document.getElementById("tempChart"), {
-          type: 'line',
-          data: {
-            labels: labels,
-            datasets: [{
-              label: 'Temperaturverlauf (nächste 24h)',
-              data: temps,
-              borderColor: 'rgba(0, 123, 255, 1)',
-              backgroundColor: 'rgba(0, 123, 255, 0.1)',
-              tension: 0.4,
-              fill: true
-            }]
-          },
-          options: {
-            responsive: true,
-            scales: { y: { beginAtZero: false } }
-          }
-        });
-      } catch (err) {
-        document.getElementById("wetter").innerHTML = `<p style="color: red;">Fehler beim Laden der Wetterdaten.</p>`;
-        console.error("Wetter API Fehler:", err);
-      }
-    }
-
-    getLocationAndLoadWeather();
-  </script>
+  <p>Wetterdaten werden geladen...</p>
 </body>
 </html>
