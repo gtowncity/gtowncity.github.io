@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Wetterseite – Robust</title>
+  <title>Wetterseite – Final</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
@@ -11,7 +11,7 @@
       padding: 20px;
       margin: 0;
     }
-    #wetter, #vorhersage, #chartContainer {
+    #wetter, #vorhersage, #chartContainer, #steuerung {
       max-width: 500px;
       margin: 20px auto;
       background: white;
@@ -19,16 +19,33 @@
       border-radius: 12px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
+    input {
+      padding: 6px;
+      margin-right: 5px;
+    }
+    button {
+      padding: 6px 10px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
-  <h1>🌤 Wetter an deinem Standort</h1>
+  <h1>🌤 Wetter in <span id="ort">deinem Standort</span></h1>
+
+  <div id="steuerung">
+    <input type="text" id="ortEingabe" placeholder="Ort eingeben...">
+    <button onclick="sucheOrt()">🔍 Suchen</button>
+    <button onclick="ladeStandort()">📍 Mein Standort</button>
+  </div>
+
   <div id="wetter"><p>Wetterdaten werden geladen...</p></div>
   <div id="vorhersage"></div>
   <div id="chartContainer"><canvas id="tempChart"></canvas></div>
 
   <script>
-    function getLocationAndLoadWeather() {
+    let reloadTimer;
+
+    function ladeStandort() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(pos => {
           ladeWetter(pos.coords.latitude, pos.coords.longitude);
@@ -38,13 +55,27 @@
       }
     }
 
-    async function ladeWetter(lat, lon) {
+    async function sucheOrt() {
+      const ort = document.getElementById("ortEingabe").value.trim();
+      if (!ort) return;
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(ort)}&format=json&limit=1`);
+      const data = await res.json();
+      if (data.length > 0) {
+        ladeWetter(parseFloat(data[0].lat), parseFloat(data[0].lon), data[0].display_name);
+      } else {
+        alert("Ort nicht gefunden.");
+      }
+    }
+
+    async function ladeWetter(lat, lon, ortName = "deinem Standort") {
+      clearTimeout(reloadTimer);
+      document.getElementById("ort").innerText = ortName;
+
       try {
         const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&daily=temperature_2m_min,temperature_2m_max,weathercode&hourly=temperature_2m&timezone=auto`;
         const res = await fetch(url);
         const data = await res.json();
 
-        // Aktuelles Wetter anzeigen
         if (data.current_weather) {
           const aktuell = data.current_weather;
           document.getElementById("wetter").innerHTML = `
@@ -52,26 +83,21 @@
             <p><strong>Wind:</strong> ${aktuell.windspeed} km/h</p>
             <p><strong>Zeit:</strong> ${new Date(aktuell.time).toLocaleString()}</p>
           `;
-        } else {
-          document.getElementById("wetter").innerHTML = `<p style='color:red;'>Keine aktuellen Wetterdaten verfügbar.</p>`;
         }
 
-        // 3-Tage-Vorhersage anzeigen (wenn vorhanden)
-        if (data.daily && data.daily.time && data.daily.weathercode) {
+        if (data.daily) {
           let html = "<h3>3-Tage-Vorhersage</h3>";
           for (let i = 0; i < 3; i++) {
-            const icon = data.daily.weathercode[i] ? getIcon(data.daily.weathercode[i]) : "❔";
-            html += `<p>${data.daily.time[i]}: ${icon} ${data.daily.temperature_2m_min[i]}–${data.daily.temperature_2m_max[i]} °C</p>`;
+            html += `<p>${data.daily.time[i]}: ${getIcon(data.daily.weathercode[i])} ${data.daily.temperature_2m_min[i]}–${data.daily.temperature_2m_max[i]} °C</p>`;
           }
           document.getElementById("vorhersage").innerHTML = html;
         }
 
-        // Temperatur-Chart anzeigen (wenn vorhanden)
-        if (data.hourly && data.hourly.temperature_2m && data.hourly.time) {
+        if (data.hourly) {
+          const ctx = document.getElementById("tempChart");
           const labels = data.hourly.time.slice(0, 24).map(t => t.split("T")[1].slice(0,5));
           const temps = data.hourly.temperature_2m.slice(0, 24);
-
-          new Chart(document.getElementById("tempChart"), {
+          new Chart(ctx, {
             type: 'line',
             data: {
               labels: labels,
@@ -93,6 +119,8 @@
       } catch (e) {
         document.getElementById("wetter").innerHTML = `<p style='color:red;'>Fehler beim Laden: ${e.message}</p>`;
       }
+
+      reloadTimer = setTimeout(() => ladeWetter(lat, lon, ortName), 600000); // alle 10 min neu laden
     }
 
     function getIcon(code) {
@@ -104,7 +132,7 @@
       return icons[code] || "❔";
     }
 
-    getLocationAndLoadWeather();
+    ladeStandort();
   </script>
 </body>
 </html>
