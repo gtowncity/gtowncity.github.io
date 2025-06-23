@@ -2,12 +2,36 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Meine Wetterseite (DWD & Open-Meteo)</title>
+  <title>Wetterseite – Live Wetterdaten</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background: #f0f0f0; }
-    h1 { color: #2c3e50; }
-    #wetter { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px #aaa; }
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to bottom, #cce3f7, #f2f9ff);
+      padding: 20px;
+      margin: 0;
+    }
+    h1 {
+      color: #2c3e50;
+      text-align: center;
+    }
+    #wetter {
+      max-width: 400px;
+      margin: 30px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .label {
+      font-weight: bold;
+    }
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 0.8em;
+      color: #555;
+    }
   </style>
 </head>
 <body>
@@ -16,22 +40,35 @@
     <p>Lade Wetterdaten...</p>
   </div>
 
+  <footer>
+    Datenquelle: <a href="https://open-meteo.com" target="_blank">Open-Meteo.com</a><br>
+    Modell: ICON (bereitgestellt vom DWD über Open-Meteo)
+  </footer>
+
   <script>
     const lat = 48.8;  // Beispiel: München
     const lon = 11.5;
 
     async function ladeWetter() {
-      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=temperature_2m,precipitation&timezone=auto`);
-      const data = await res.json();
+      try {
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=temperature_2m,precipitation&timezone=auto`);
+        const data = await res.json();
 
-      const aktuell = data.current_weather;
+        if (!data.current_weather) {
+          throw new Error("Keine Wetterdaten gefunden.");
+        }
 
-      document.getElementById("wetter").innerHTML = `
-        <strong>Temperatur:</strong> ${aktuell.temperature} °C<br>
-        <strong>Wind:</strong> ${aktuell.windspeed} km/h<br>
-        <strong>Zeit:</strong> ${aktuell.time}<br>
-        <em>Daten von Open-Meteo.com (ICON-Modell)</em>
-      `;
+        const aktuell = data.current_weather;
+
+        document.getElementById("wetter").innerHTML = `
+          <p><span class="label">Temperatur:</span> ${aktuell.temperature} °C</p>
+          <p><span class="label">Wind:</span> ${aktuell.windspeed} km/h</p>
+          <p><span class="label">Zeit:</span> ${new Date(aktuell.time).toLocaleString()}</p>
+        `;
+      } catch (err) {
+        document.getElementById("wetter").innerHTML = `<p style="color: red;">Fehler beim Laden der Wetterdaten.</p>`;
+        console.error("Wetter API Fehler:", err);
+      }
     }
 
     ladeWetter();
