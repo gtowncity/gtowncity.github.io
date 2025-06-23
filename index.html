@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Wetter & Radar Kombiniert</title>
+  <title>Wetter & Radar Final</title>
   <style>
     body { margin: 0; font-family: sans-serif; background: #222; color: #fff; }
     .container { max-width: 800px; margin: 0 auto; padding: 20px; }
@@ -14,13 +14,18 @@
     }
     #radarFrame { width: 100%; height: 400px; border: none; border-radius: 10px; }
     label { display: block; margin-top: 0.5em; font-weight: bold; }
-    .hourly { display: flex; overflow-x: auto; gap: 12px; margin-top: 18px; padding-bottom: 12px; }
+    .hourly-wrapper { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 16px; }
+    .hourly { display: flex; overflow: hidden; gap: 12px; flex: 1; scroll-behavior: smooth; }
     .hour {
       flex: 0 0 auto; width: 75px;
       text-align: center; background: #555; padding: 10px;
       border-radius: 10px; font-size: 0.9rem;
     }
     .now { background: gold; color: black; font-weight: bold; }
+    .arrow-btn {
+      background: #444; color: white; border: none; padding: 8px 12px; font-size: 1.2em;
+      border-radius: 6px; cursor: pointer;
+    }
     .searchbox {
       display: flex; flex-wrap: wrap;
       gap: 8px; margin-bottom: 1em;
@@ -34,20 +39,24 @@
 <body>
 <div class="container">
   <h1>🌤 Wetter und Radar</h1>
+  <div class="searchbox">
+    <label for="ortInput">📍 Ort wählen:</label>
+    <input type="text" id="ortInput" placeholder="z. B. Straubing">
+    <button onclick="sucheOrt()">Suchen</button>
+  </div>
+
   <div class="wetterbox">
     <h2 id="region">Wetter Straubing</h2>
     <p id="beschreibung">Lade Wetterdaten...</p>
-    <div class="hourly" id="stunde"></div>
+    <div class="hourly-wrapper">
+      <button class="arrow-btn" onclick="scrollStunde(-1)">&larr;</button>
+      <div class="hourly" id="stunde"></div>
+      <button class="arrow-btn" onclick="scrollStunde(1)">&rarr;</button>
+    </div>
     <p style="text-align:right; font-size: 0.9em; opacity: 0.8;" id="zeit"></p>
   </div>
 
   <div class="radarbox">
-    <div class="searchbox">
-      <label for="ortInput">📍 Ort wählen:</label>
-      <input type="text" id="ortInput" placeholder="z. B. Straubing">
-      <button onclick="sucheOrt()">Suchen</button>
-    </div>
-
     <label for="radarSelect">🌍 Radar-Ansicht:</label>
     <select id="radarSelect" onchange="wechselRadar()">
       <option value="radar">Regen</option>
@@ -56,7 +65,6 @@
       <option value="temp">Temperatur</option>
       <option value="pressure">Luftdruck</option>
     </select>
-
     <iframe id="radarFrame" loading="lazy"></iframe>
   </div>
 </div>
@@ -89,6 +97,11 @@ async function sucheOrt() {
   } else {
     alert("Ort nicht gefunden.");
   }
+}
+
+function scrollStunde(dir) {
+  const box = document.getElementById("stunde");
+  box.scrollBy({ left: dir * 100, behavior: 'smooth' });
 }
 
 async function ladeWetter() {
