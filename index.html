@@ -2,128 +2,66 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Wetterseite – Final</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <title>Dynamisches Wetter UI</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #eef6fc;
-      padding: 20px;
       margin: 0;
+      font-family: sans-serif;
+      background: url('https://source.unsplash.com/1600x900/?sky,clouds') no-repeat center center fixed;
+      background-size: cover;
+      color: white;
+      text-shadow: 0 0 5px black;
     }
-    #wetter, #vorhersage, #chartContainer, #steuerung {
-      max-width: 500px;
-      margin: 20px auto;
-      background: white;
-      padding: 20px;
+    .overlay {
+      background: rgba(0, 0, 0, 0.5);
+      padding: 30px;
+      max-width: 700px;
+      margin: 50px auto;
       border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-    input {
-      padding: 6px;
-      margin-right: 5px;
+    .temp {
+      font-size: 64px;
+      font-weight: bold;
     }
-    button {
-      padding: 6px 10px;
-      cursor: pointer;
+    .hourly {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+    .hour {
+      flex: 1 1 70px;
+      background: rgba(255,255,255,0.1);
+      padding: 10px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .warning {
+      background: #ffcc00;
+      color: black;
+      padding: 8px;
+      font-weight: bold;
+      border-radius: 8px;
+      display: inline-block;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
-  <h1>🌤 Wetter in <span id="ort">deinem Standort</span></h1>
-
-  <div id="steuerung">
-    <input type="text" id="ortEingabe" placeholder="Ort eingeben...">
-    <button onclick="sucheOrt()">🔍 Suchen</button>
-    <button onclick="ladeStandort()">📍 Mein Standort</button>
+  <div class="overlay">
+    <h2 id="region">Wetter</h2>
+    <div class="temp" id="temp">--°</div>
+    <div class="warning" id="warn">Wetter wird geladen...</div>
+    <div class="hourly" id="stunde"></div>
+    <p id="beschreibung">...</p>
+    <p style="text-align:right; font-size: 0.9em; opacity: 0.8;" id="zeit"></p>
   </div>
 
-  <div id="wetter"><p>Wetterdaten werden geladen...</p></div>
-  <div id="vorhersage"></div>
-  <div id="chartContainer"><canvas id="tempChart"></canvas></div>
-
   <script>
-    let reloadTimer;
+    const warnBox = document.getElementById("warn");
+    const desc = document.getElementById("beschreibung");
 
-    function ladeStandort() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(pos => {
-          ladeWetter(pos.coords.latitude, pos.coords.longitude);
-        }, () => ladeWetter(48.8, 11.5));
-      } else {
-        ladeWetter(48.8, 11.5);
-      }
-    }
-
-    async function sucheOrt() {
-      const ort = document.getElementById("ortEingabe").value.trim();
-      if (!ort) return;
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(ort)}&format=json&limit=1`);
-      const data = await res.json();
-      if (data.length > 0) {
-        ladeWetter(parseFloat(data[0].lat), parseFloat(data[0].lon), data[0].display_name);
-      } else {
-        alert("Ort nicht gefunden.");
-      }
-    }
-
-    async function ladeWetter(lat, lon, ortName = "deinem Standort") {
-      clearTimeout(reloadTimer);
-      document.getElementById("ort").innerText = ortName;
-
-      try {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&daily=temperature_2m_min,temperature_2m_max,weathercode&hourly=temperature_2m&timezone=auto`;
-        const res = await fetch(url);
-        const data = await res.json();
-
-        if (data.current_weather) {
-          const aktuell = data.current_weather;
-          document.getElementById("wetter").innerHTML = `
-            <p><strong>Temperatur:</strong> ${aktuell.temperature} °C</p>
-            <p><strong>Wind:</strong> ${aktuell.windspeed} km/h</p>
-            <p><strong>Zeit:</strong> ${new Date(aktuell.time).toLocaleString()}</p>
-          `;
-        }
-
-        if (data.daily) {
-          let html = "<h3>3-Tage-Vorhersage</h3>";
-          for (let i = 0; i < 3; i++) {
-            html += `<p>${data.daily.time[i]}: ${getIcon(data.daily.weathercode[i])} ${data.daily.temperature_2m_min[i]}–${data.daily.temperature_2m_max[i]} °C</p>`;
-          }
-          document.getElementById("vorhersage").innerHTML = html;
-        }
-
-        if (data.hourly) {
-          const ctx = document.getElementById("tempChart");
-          const labels = data.hourly.time.slice(0, 24).map(t => t.split("T")[1].slice(0,5));
-          const temps = data.hourly.temperature_2m.slice(0, 24);
-          new Chart(ctx, {
-            type: 'line',
-            data: {
-              labels: labels,
-              datasets: [{
-                label: 'Temperatur (24h)',
-                data: temps,
-                borderColor: 'blue',
-                backgroundColor: 'rgba(0,123,255,0.1)',
-                tension: 0.3,
-                fill: true
-              }]
-            },
-            options: {
-              responsive: true,
-              scales: { y: { beginAtZero: false } }
-            }
-          });
-        }
-      } catch (e) {
-        document.getElementById("wetter").innerHTML = `<p style='color:red;'>Fehler beim Laden: ${e.message}</p>`;
-      }
-
-      reloadTimer = setTimeout(() => ladeWetter(lat, lon, ortName), 600000); // alle 10 min neu laden
-    }
-
-    function getIcon(code) {
+    function icon(code) {
       const icons = {
         0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️", 45: "🌫️", 48: "🌫️",
         51: "🌦️", 61: "🌧️", 63: "🌧️", 65: "🌧️", 80: "🌧️",
@@ -132,7 +70,41 @@
       return icons[code] || "❔";
     }
 
-    ladeStandort();
+    async function ladeWetter(lat = 48.88, lon = 12.62) {
+      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=temperature_2m,precipitation_probability,weathercode&timezone=auto`);
+      const data = await res.json();
+
+      const w = data.current_weather;
+      document.getElementById("temp").innerText = `${w.temperature}°`;
+      document.getElementById("zeit").innerText = new Date(w.time).toLocaleString();
+
+      const stdDiv = document.getElementById("stunde");
+      stdDiv.innerHTML = "";
+      for (let i = 0; i < 7; i++) {
+        const t = data.hourly.time[i].split("T")[1].slice(0, 5);
+        const temp = data.hourly.temperature_2m[i];
+        const code = data.hourly.weathercode[i];
+        const p = data.hourly.precipitation_probability[i];
+        stdDiv.innerHTML += `<div class='hour'>${t}<br>${icon(code)}<br>${temp}°<br>${p}%</div>`;
+      }
+
+      warnBox.innerText = icon(w.weathercode) + " aktuell: " + beschreibung(w.weathercode);
+      desc.innerText = `Die aktuelle Temperatur liegt bei ${w.temperature} °C mit etwa ${w.windspeed} km/h Wind.`;
+      document.getElementById("region").innerText = "Wetter Straubing";
+    }
+
+    function beschreibung(code) {
+      const beschr = {
+        0: "sonnig", 1: "meist sonnig", 2: "wolkig", 3: "bewölkt",
+        45: "neblig", 48: "neblig", 51: "leichter Nieselregen", 61: "leichter Regen",
+        63: "mäßiger Regen", 65: "starker Regen", 80: "Regenschauer",
+        71: "leichter Schneefall", 73: "Schnee", 75: "starker Schneefall",
+        95: "Gewitter", 99: "schwere Gewitter"
+      };
+      return beschr[code] || "unbekannt";
+    }
+
+    ladeWetter();
   </script>
 </body>
 </html>
