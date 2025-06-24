@@ -3,127 +3,124 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Wetter Straubing, Bayern</title>
+  <title>Wetter Straubing</title>
+  <link rel="stylesheet" href="https://necolas.github.io/normalize.css/latest/normalize.css">
   <style>
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       background: #fff;
-      margin: 0;
-      padding: 20px;
       color: #111;
+      margin: 0;
+      padding: 1rem;
     }
+
     h1 {
-      font-size: 2rem;
-      margin-bottom: 0.2em;
+      font-size: 1.8rem;
+      font-weight: 600;
     }
     h2 {
-      font-size: 1.2rem;
-      margin-bottom: 1em;
-      color: #444;
+      font-size: 1rem;
+      color: #555;
+      margin-bottom: 1.5rem;
     }
-    .search-box {
-      margin-bottom: 20px;
+
+    .search {
       display: flex;
-      gap: 10px;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
     }
-    .search-box input {
-      padding: 10px;
-      font-size: 1em;
-      border-radius: 8px;
+    .search input {
+      flex: 1;
+      padding: 0.6rem 1rem;
       border: 1px solid #ccc;
-      width: 200px;
+      border-radius: 10px;
+      font-size: 1rem;
     }
-    .search-box button {
-      padding: 10px;
-      border-radius: 8px;
+    .search button {
+      padding: 0.6rem 1rem;
+      background: #007aff;
+      color: #fff;
       border: none;
-      background-color: #007aff;
-      color: white;
+      border-radius: 10px;
       cursor: pointer;
     }
-    .forecast-container {
+
+    .forecast-scroll {
       display: flex;
       overflow-x: auto;
-      padding: 10px 0;
-      gap: 10px;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
     }
     .forecast-day {
       flex: 0 0 auto;
-      border-radius: 12px;
-      background: #f5f7fa;
-      border: 2px solid transparent;
-      padding: 1em;
+      background: #f4f5f7;
+      border-radius: 14px;
+      padding: 1rem;
+      min-width: 80px;
       text-align: center;
-      width: 90px;
-      cursor: pointer;
-      transition: border-color 0.3s;
+      border: 2px solid transparent;
+      transition: border 0.3s;
     }
     .forecast-day.active {
       border-color: #007aff;
-      background: #e5f0ff;
     }
     .forecast-day span {
       display: block;
-      margin: 4px 0;
     }
-    .forecast-day .icon {
-      font-size: 1.8em;
+    .emoji {
+      font-size: 1.6rem;
+      margin: 0.4rem 0;
     }
+
     .today-box {
       background: #246bff;
       color: white;
-      border-radius: 12px;
-      padding: 1.5em;
+      border-radius: 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      flex-wrap: wrap;
-      margin-bottom: 30px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
     }
-    .today-text {
+    .today-box .text {
       max-width: 60%;
     }
-    .today-icon {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+    .today-box .now {
+      text-align: right;
     }
-    .today-icon .sun {
-      font-size: 3em;
-    }
-    .today-icon .temp {
-      font-size: 2.5em;
+    .today-box .now .temp {
+      font-size: 2.8rem;
       font-weight: bold;
     }
+    .today-box .now .emoji {
+      font-size: 2.4rem;
+    }
+
+    .periods {
+      display: flex;
+      justify-content: space-evenly;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+    }
+    .period {
+      background: #f4f5f7;
+      border-radius: 12px;
+      padding: 1rem;
+      text-align: center;
+      flex: 1;
+      min-width: 100px;
+    }
+    .period .emoji {
+      font-size: 1.6rem;
+      margin-bottom: 0.3rem;
+    }
+
     iframe {
       border: none;
       border-radius: 12px;
       width: 100%;
       height: 400px;
-    }
-    .hourly-container {
-      display: flex;
-      gap: 20px;
-      justify-content: center;
-      margin-top: 20px;
-    }
-    .hourly-box {
-      background: #f5f7fa;
-      padding: 10px;
-      border-radius: 12px;
-      text-align: center;
-      width: 80px;
-    }
-    .hourly-box .icon {
-      font-size: 1.6em;
-    }
-    .hourly-box .label {
-      color: #555;
-      font-size: 0.9em;
-    }
-    .hourly-box .temp {
-      font-weight: bold;
-      font-size: 1.1em;
     }
   </style>
 </head>
@@ -131,86 +128,80 @@
   <h1>Wetter Straubing, Bayern</h1>
   <h2>14 Tage Vorhersage und 21 Tage im Trend</h2>
 
-  <div class="search-box">
+  <div class="search">
     <input type="text" placeholder="Ort suchen...">
     <button>🔍</button>
   </div>
 
-  <div class="forecast-container" id="forecast-container"></div>
+  <div class="forecast-scroll">
+    <div class="forecast-day active">
+      <span>Heute</span>
+      <span>24.06.</span>
+      <span class="emoji">☀️</span>
+      <span>27°</span>
+    </div>
+    <div class="forecast-day">
+      <span>Mi</span>
+      <span>25.06.</span>
+      <span class="emoji">🌞</span>
+      <span>30°</span>
+    </div>
+    <div class="forecast-day">
+      <span>Do</span>
+      <span>26.06.</span>
+      <span class="emoji">🌩</span>
+      <span>29°</span>
+    </div>
+    <!-- weitere Tage... -->
+  </div>
 
   <div class="today-box">
-    <div class="today-text">
+    <div class="text">
       <h3>Heute</h3>
       <p>Es bleibt trocken und tagsüber noch 10 Stunden Sonne.<br>
       Maximaltemperatur: 27°<br>
       <strong>Warnung vor sehr hoher UV–Strahlung und Sonnenbrandgefahr</strong></p>
     </div>
-    <div class="today-icon">
-      <div class="sun">🌞</div>
+    <div class="now">
+      <div class="emoji">🌞</div>
       <div class="temp">22°</div>
-      <small>Jetzt&nbsp;&nbsp;10:23 Uhr<br>fühlt sich wärmer an</small>
+      <small>Jetzt 10:23 Uhr<br>fühlt sich wärmer an</small>
     </div>
   </div>
 
-  <div class="hourly-container">
-    <div class="hourly-box">
-      <div class="icon">🌙</div>
-      <div class="temp">17°</div>
-      <div class="label">Nachts</div>
+  <div class="periods">
+    <div class="period">
+      <div class="emoji">🌙</div>
+      <strong>17°</strong>
+      <div>Nachts</div>
     </div>
-    <div class="hourly-box">
-      <div class="icon">🌤️</div>
-      <div class="temp">21°</div>
-      <div class="label">Morgens</div>
+    <div class="period">
+      <div class="emoji">⛅</div>
+      <strong>21°</strong>
+      <div>Morgens</div>
     </div>
-    <div class="hourly-box">
-      <div class="icon">☀️</div>
-      <div class="temp">24°</div>
-      <div class="label">Vormittags</div>
+    <div class="period">
+      <div class="emoji">☀️</div>
+      <strong>24°</strong>
+      <div>Vormittags</div>
     </div>
-    <div class="hourly-box">
-      <div class="icon">☀️</div>
-      <div class="temp">27°</div>
-      <div class="label">Nachmittags</div>
+    <div class="period">
+      <div class="emoji">☀️</div>
+      <strong>27°</strong>
+      <div>Nachmittags</div>
     </div>
-    <div class="hourly-box">
-      <div class="icon">☀️</div>
-      <div class="temp">26°</div>
-      <div class="label">Abends</div>
+    <div class="period">
+      <div class="emoji">☀️</div>
+      <strong>26°</strong>
+      <div>Abends</div>
     </div>
-    <div class="hourly-box">
-      <div class="icon">🌙</div>
-      <div class="temp">21°</div>
-      <div class="label">Nachts</div>
+    <div class="period">
+      <div class="emoji">🌙</div>
+      <strong>21°</strong>
+      <div>Nachts</div>
     </div>
   </div>
 
   <iframe src="https://embed.windy.com/embed2.html?lat=48.88&lon=12.58&detailLat=48.88&detailLon=12.58&width=650&height=450&zoom=8&level=surface&overlay=rain&menu=&message=true&marker=true&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=default&metricTemp=default&radarRange=-1"></iframe>
-
-  <script>
-    const forecastDays = [
-      { date: '24.06.', label: 'Heute', icon: '🌞', temp: '27°', alert: true },
-      { date: '25.06.', label: 'Mi', icon: '🌞', temp: '30°' },
-      { date: '26.06.', label: 'Do', icon: '🌧️', temp: '29°' },
-      { date: '27.06.', label: 'Fr', icon: '🌧', temp: '25°' },
-      { date: '28.06.', label: 'Sa', icon: '🌞', temp: '27°' },
-      { date: '29.06.', label: 'So', icon: '🌞', temp: '30°' },
-      { date: '30.06.', label: 'Mo', icon: '⛅', temp: '29°' },
-      { date: '01.07.', label: '', icon: '➡️', temp: '' }
-    ];
-
-    const container = document.getElementById('forecast-container');
-    forecastDays.forEach((day, index) => {
-      const div = document.createElement('div');
-      div.className = 'forecast-day' + (index === 0 ? ' active' : '');
-      div.innerHTML = `
-        <span>${day.label}</span>
-        <span>${day.date}</span>
-        <span class="icon">${day.icon}</span>
-        <span>${day.temp}</span>
-      `;
-      container.appendChild(div);
-    });
-  </script>
 </body>
 </html>
