@@ -12,6 +12,7 @@
       color: #111;
       margin: 0;
       padding: 1rem;
+      text-align: center;
     }
 
     h1 {
@@ -26,11 +27,11 @@
 
     .search {
       display: flex;
+      justify-content: center;
       gap: 0.5rem;
       margin-bottom: 1.5rem;
     }
     .search input {
-      flex: 1;
       padding: 0.6rem 1rem;
       border: 1px solid #ccc;
       border-radius: 10px;
@@ -47,6 +48,7 @@
 
     .forecast-scroll {
       display: flex;
+      justify-content: center;
       overflow-x: auto;
       gap: 1rem;
       margin-bottom: 1.5rem;
@@ -81,6 +83,7 @@
       align-items: center;
       padding: 2rem;
       margin-bottom: 1.5rem;
+      text-align: left;
     }
     .today-box .text {
       max-width: 60%;
@@ -98,7 +101,7 @@
 
     .periods {
       display: flex;
-      justify-content: space-evenly;
+      justify-content: center;
       gap: 1rem;
       flex-wrap: wrap;
       margin-bottom: 2rem;
@@ -152,7 +155,37 @@
       <span class="emoji">🌩</span>
       <span>29°</span>
     </div>
-    <!-- weitere Tage... -->
+    <div class="forecast-day">
+  <span>Fr</span>
+  <span>27.06.</span>
+  <span class="emoji">🌧</span>
+  <span>25°</span>
+</div>
+<div class="forecast-day">
+  <span>Sa</span>
+  <span>28.06.</span>
+  <span class="emoji">☀️</span>
+  <span>27°</span>
+</div>
+<div class="forecast-day">
+  <span>So</span>
+  <span>29.06.</span>
+  <span class="emoji">☀️</span>
+  <span>30°</span>
+</div>
+<div class="forecast-day">
+  <span>Mo</span>
+  <span>30.06.</span>
+  <span class="emoji">⛅</span>
+  <span>29°</span>
+</div>
+<div class="forecast-day">
+  <span>01.07.</span>
+  <span></span>
+  <span class="emoji">➡️</span>
+  <span></span>
+</div>
+
   </div>
 
   <div class="today-box">
