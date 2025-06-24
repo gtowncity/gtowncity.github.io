@@ -70,7 +70,7 @@
       display: block;
     }
     .emoji {
-      font-size: 1.6rem;
+      font-size: 2.4rem;
       margin: 0.4rem 0;
     }
 
@@ -96,7 +96,7 @@
       font-weight: bold;
     }
     .today-box .now .emoji {
-      font-size: 2.4rem;
+      font-size: 3rem;
     }
 
     .periods {
@@ -115,7 +115,7 @@
       min-width: 100px;
     }
     .period .emoji {
-      font-size: 1.6rem;
+      font-size: 2.2rem;
       margin-bottom: 0.3rem;
     }
 
@@ -133,114 +133,103 @@
 
   <div class="search">
     <input id="location-input" type="text" placeholder="Ort suchen...">
-    <button onclick="alert('Diese Funktion ist aktuell nicht verfügbar.')">🔍</button>
+    <button id="search-btn">🔍</button>
   </div>
 
-  <div class="forecast-scroll">
-    <div class="forecast-day active">
-      <span>Heute</span>
-      <span>24.06.</span>
-      <span class="emoji">☀️</span>
-      <span>27°</span>
-    </div>
-    <div class="forecast-day">
-      <span>Mi</span>
-      <span>25.06.</span>
-      <span class="emoji">🌞</span>
-      <span>30°</span>
-    </div>
-    <div class="forecast-day">
-      <span>Do</span>
-      <span>26.06.</span>
-      <span class="emoji">🌩</span>
-      <span>29°</span>
-    </div>
-    <div class="forecast-day">
-      <span>Fr</span>
-      <span>27.06.</span>
-      <span class="emoji">🌧</span>
-      <span>25°</span>
-    </div>
-    <div class="forecast-day">
-      <span>Sa</span>
-      <span>28.06.</span>
-      <span class="emoji">☀️</span>
-      <span>27°</span>
-    </div>
-    <div class="forecast-day">
-      <span>So</span>
-      <span>29.06.</span>
-      <span class="emoji">☀️</span>
-      <span>30°</span>
-    </div>
-    <div class="forecast-day">
-      <span>Mo</span>
-      <span>30.06.</span>
-      <span class="emoji">⛅</span>
-      <span>29°</span>
-    </div>
-    <div class="forecast-day">
-      <span>01.07.</span>
-      <span></span>
-      <span class="emoji">➡️</span>
-      <span></span>
-    </div>
-  </div>
+  <div class="forecast-scroll" id="forecast-days"></div>
 
   <div class="today-box">
     <div class="text">
       <h3>Heute</h3>
-      <p>Es bleibt trocken und tagsüber noch 10 Stunden Sonne.<br>
-      Maximaltemperatur: 27°<br>
-      <strong>Warnung vor sehr hoher UV–Strahlung und Sonnenbrandgefahr</strong></p>
+      <p id="summary">Wird geladen...</p>
     </div>
     <div class="now">
-      <div class="emoji">🌞</div>
-      <div class="temp">22°</div>
+      <div class="emoji" id="emoji">☀️</div>
+      <div class="temp" id="temp">--°</div>
       <small>Jetzt <span id="current-time"></span> Uhr<br>fühlt sich wärmer an</small>
     </div>
   </div>
 
-  <div class="periods">
-    <div class="period">
-      <div class="emoji">🌙</div>
-      <strong>17°</strong>
-      <div>Nachts</div>
-    </div>
-    <div class="period">
-      <div class="emoji">⛅</div>
-      <strong>21°</strong>
-      <div>Morgens</div>
-    </div>
-    <div class="period">
-      <div class="emoji">☀️</div>
-      <strong>24°</strong>
-      <div>Vormittags</div>
-    </div>
-    <div class="period">
-      <div class="emoji">☀️</div>
-      <strong>27°</strong>
-      <div>Nachmittags</div>
-    </div>
-    <div class="period">
-      <div class="emoji">☀️</div>
-      <strong>26°</strong>
-      <div>Abends</div>
-    </div>
-    <div class="period">
-      <div class="emoji">🌙</div>
-      <strong>21°</strong>
-      <div>Nachts</div>
-    </div>
-  </div>
+  <div class="periods" id="hourly-periods"></div>
 
-  <iframe src="https://embed.windy.com/embed2.html?lat=48.88&lon=12.58&detailLat=48.88&detailLon=12.58&width=650&height=450&zoom=8&level=surface&overlay=rain&menu=&message=true&marker=true&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=default&metricTemp=default&radarRange=-1"></iframe>
+  <iframe id="radar" src="https://embed.windy.com/embed2.html?lat=48.88&lon=12.58&detailLat=48.88&detailLon=12.58&width=650&height=450&zoom=8&level=surface&overlay=rain&menu=&message=true&marker=true&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=default&metricTemp=default&radarRange=-1"></iframe>
 
   <script>
     const now = new Date();
     const hours = now.getHours().toString().padStart(2, '0');
     const minutes = now.getMinutes().toString().padStart(2, '0');
     document.getElementById("current-time").textContent = `${hours}:${minutes}`;
+
+    const weatherCodeToEmoji = (code, isNight = false) => {
+      if (code === 0) return isNight ? "🌙" : "🌞";
+      if ([1, 2, 3].includes(code)) return isNight ? "🌙☁️" : "🌤️";
+      if ([45, 48]) return "🌫️";
+      if ([51, 53, 55, 61, 63, 65, 80, 81, 82]) return "🌧️";
+      if ([71, 73, 75, 85, 86]) return "❄️";
+      if ([95, 96, 99]) return "⛈️";
+      return "❓";
+    };
+
+    async function fetchWeather(lat = 48.88, lon = 12.58, locationName = "Straubing, Bayern") {
+      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&daily=temperature_2m_max,weathercode&hourly=temperature_2m,weathercode&timezone=auto`);
+      const data = await res.json();
+      document.querySelector("h1").textContent = `Wetter ${locationName}`;
+
+      const temp = data.current_weather.temperature.toFixed(1);
+      document.getElementById("temp").textContent = `${temp}°`;
+      document.getElementById("emoji").textContent = weatherCodeToEmoji(data.current_weather.weathercode);
+      document.getElementById("summary").innerHTML = `Aktuelle Temperatur: ${temp}°<br><strong>Live-Daten von Open-Meteo</strong>`;
+
+      const daily = data.daily;
+      const days = document.getElementById("forecast-days");
+      days.innerHTML = "";
+      const wday = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(daily.time[i]);
+        const day = wday[d.getDay()];
+        const el = document.createElement("div");
+        el.className = `forecast-day${i === 0 ? " active" : ""}`;
+        el.innerHTML = `<span>${i === 0 ? "Heute" : day}</span><span>${d.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })}</span><span class="emoji">${weatherCodeToEmoji(daily.weathercode[i])}</span><span>${Math.round(daily.temperature_2m_max[i])}°</span>`;
+        days.appendChild(el);
+      }
+
+      const hourly = data.hourly;
+      const hoursDiv = document.getElementById("hourly-periods");
+      hoursDiv.innerHTML = "";
+      const entries = [
+        { label: "Heute Nacht", index: 2 },
+        { label: "Morgens", index: 6 },
+        { label: "Vormittags", index: 9 },
+        { label: "Nachmittags", index: 13 },
+        { label: "Abends", index: 18 },
+        { label: "Spät nachts", index: 23 }
+      ];
+      for (const { label, index } of entries) {
+        const isNight = label.toLowerCase().includes("nacht");
+        const emoji = weatherCodeToEmoji(hourly.weathercode[index], isNight);
+        const temp = Math.round(hourly.temperature_2m[index]);
+        const div = document.createElement("div");
+        div.className = "period";
+        div.innerHTML = `<div class="emoji">${emoji}</div><strong>${temp}°</strong><div>${label}</div>`;
+        hoursDiv.appendChild(div);
+      }
+    }
+
+    document.getElementById("search-btn").addEventListener("click", async () => {
+      const input = document.getElementById("location-input").value.trim();
+      if (!input) return;
+      const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(input)}&count=1&language=de&format=json`);
+      const data = await res.json();
+      if (!data.results || data.results.length === 0) {
+        alert("Ort nicht gefunden");
+        return;
+      }
+      const { latitude, longitude, name, country } = data.results[0];
+      document.getElementById("radar").src = `https://embed.windy.com/embed2.html?lat=${latitude}&lon=${longitude}&detailLat=${latitude}&detailLon=${longitude}&width=650&height=450&zoom=8&level=surface&overlay=rain&menu=&message=true&marker=true&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=default&metricTemp=default&radarRange=-1`;
+      fetchWeather(latitude, longitude, `${name}, ${country}`);
+    });
+
+    fetchWeather();
   </script>
 </body>
 </html>
