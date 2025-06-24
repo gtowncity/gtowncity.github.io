@@ -3,188 +3,214 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Wetter & Radar</title>
+  <title>Wetter Straubing, Bayern</title>
   <style>
-    :root {
-      --bg: #222;
-      --fg: #fff;
-      --box: #333;
-      --now: gold;
-      --input: #111;
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #fff;
+      margin: 0;
+      padding: 20px;
+      color: #111;
     }
-    [data-theme="light"] {
-      --bg: #f0f0f0;
-      --fg: #111;
-      --box: #fff;
-      --now: orange;
-      --input: #eee;
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 0.2em;
     }
-    body { margin: 0; font-family: sans-serif; background: var(--bg); color: var(--fg); }
-    .container { max-width: 900px; margin: 0 auto; padding: 20px; }
-    .radarbox, .wetterbox, .vorhersagebox { background: var(--box); border-radius: 10px; padding: 1em; margin-top: 1em; }
-    input, select, button {
-      padding: 6px; margin: 5px 4px 10px 0;
-      background: var(--input); color: var(--fg); border: 1px solid #555; border-radius: 5px;
+    h2 {
+      font-size: 1.2rem;
+      margin-bottom: 1em;
+      color: #444;
     }
-    #radarFrame { width: 100%; height: 400px; border: none; border-radius: 10px; }
-    label { font-weight: bold; }
-    .hourly-wrapper { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 16px; }
-    .hourly { display: flex; overflow: hidden; gap: 12px; flex: 1; scroll-behavior: smooth; }
-    .hour {
-      flex: 0 0 auto; width: 75px;
-      text-align: center; background: #555; padding: 10px;
-      border-radius: 10px; font-size: 0.9rem;
+    .search-box {
+      margin-bottom: 20px;
+      display: flex;
+      gap: 10px;
     }
-    .now { background: var(--now); color: black; font-weight: bold; }
-    .arrow-btn {
-      background: #444; color: white; border: none; padding: 8px 12px; font-size: 1.2em;
-      border-radius: 6px; cursor: pointer;
+    .search-box input {
+      padding: 10px;
+      font-size: 1em;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      width: 200px;
     }
-    .searchbox { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 1em; flex-wrap: wrap; }
-    #vorhersage { display: flex; gap: 12px; flex-wrap: wrap; justify-content: space-around; text-align: center; }
-    .tag { padding: 10px; background: #444; border-radius: 10px; min-width: 100px; }
-    .dark-toggle { float: right; margin-top: -40px; }
-    .warnung { background: darkred; padding: 0.5em; border-radius: 6px; color: white; font-weight: bold; }
+    .search-box button {
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      background-color: #007aff;
+      color: white;
+      cursor: pointer;
+    }
+    .forecast-container {
+      display: flex;
+      overflow-x: auto;
+      padding: 10px 0;
+      gap: 10px;
+    }
+    .forecast-day {
+      flex: 0 0 auto;
+      border-radius: 12px;
+      background: #f5f7fa;
+      border: 2px solid transparent;
+      padding: 1em;
+      text-align: center;
+      width: 90px;
+      cursor: pointer;
+      transition: border-color 0.3s;
+    }
+    .forecast-day.active {
+      border-color: #007aff;
+      background: #e5f0ff;
+    }
+    .forecast-day span {
+      display: block;
+      margin: 4px 0;
+    }
+    .forecast-day .icon {
+      font-size: 1.8em;
+    }
+    .today-box {
+      background: #246bff;
+      color: white;
+      border-radius: 12px;
+      padding: 1.5em;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 30px;
+    }
+    .today-text {
+      max-width: 60%;
+    }
+    .today-icon {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .today-icon .sun {
+      font-size: 3em;
+    }
+    .today-icon .temp {
+      font-size: 2.5em;
+      font-weight: bold;
+    }
+    iframe {
+      border: none;
+      border-radius: 12px;
+      width: 100%;
+      height: 400px;
+    }
+    .hourly-container {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    .hourly-box {
+      background: #f5f7fa;
+      padding: 10px;
+      border-radius: 12px;
+      text-align: center;
+      width: 80px;
+    }
+    .hourly-box .icon {
+      font-size: 1.6em;
+    }
+    .hourly-box .label {
+      color: #555;
+      font-size: 0.9em;
+    }
+    .hourly-box .temp {
+      font-weight: bold;
+      font-size: 1.1em;
+    }
   </style>
 </head>
 <body>
-<div class="container" id="app">
-  <h1>🌤 Wetter und Radar <button class="dark-toggle" onclick="toggleTheme()">☀️/🌙</button></h1>
+  <h1>Wetter Straubing, Bayern</h1>
+  <h2>14 Tage Vorhersage und 21 Tage im Trend</h2>
 
-  <div class="searchbox">
-    <label for="ortInput">📍 Ort:</label>
-    <input type="text" id="ortInput" placeholder="z. B. München">
-    <button onclick="sucheOrt()">Suchen</button>
-    <button onclick="nutzeStandort()">📍 Mein Standort</button>
+  <div class="search-box">
+    <input type="text" placeholder="Ort suchen...">
+    <button>🔍</button>
   </div>
 
-  <div id="warnBox"></div>
+  <div class="forecast-container" id="forecast-container"></div>
 
-  <div class="wetterbox">
-    <h2 id="region">Wetter</h2>
-    <p id="beschreibung">Lade...</p>
-    <div class="hourly-wrapper">
-      <button class="arrow-btn" onclick="scrollStunde(-1)">&larr;</button>
-      <div class="hourly" id="stunde"></div>
-      <button class="arrow-btn" onclick="scrollStunde(1)">&rarr;</button>
+  <div class="today-box">
+    <div class="today-text">
+      <h3>Heute</h3>
+      <p>Es bleibt trocken und tagsüber noch 10 Stunden Sonne.<br>
+      Maximaltemperatur: 27°<br>
+      <strong>Warnung vor sehr hoher UV–Strahlung und Sonnenbrandgefahr</strong></p>
     </div>
-    <p id="zeit" style="text-align:right; font-size:0.9em; opacity:0.7;"></p>
+    <div class="today-icon">
+      <div class="sun">🌞</div>
+      <div class="temp">22°</div>
+      <small>Jetzt&nbsp;&nbsp;10:23 Uhr<br>fühlt sich wärmer an</small>
+    </div>
   </div>
 
-  <div class="vorhersagebox">
-    <h3>3-Tage-Vorhersage</h3>
-    <div id="vorhersage"></div>
+  <div class="hourly-container">
+    <div class="hourly-box">
+      <div class="icon">🌙</div>
+      <div class="temp">17°</div>
+      <div class="label">Nachts</div>
+    </div>
+    <div class="hourly-box">
+      <div class="icon">🌤️</div>
+      <div class="temp">21°</div>
+      <div class="label">Morgens</div>
+    </div>
+    <div class="hourly-box">
+      <div class="icon">☀️</div>
+      <div class="temp">24°</div>
+      <div class="label">Vormittags</div>
+    </div>
+    <div class="hourly-box">
+      <div class="icon">☀️</div>
+      <div class="temp">27°</div>
+      <div class="label">Nachmittags</div>
+    </div>
+    <div class="hourly-box">
+      <div class="icon">☀️</div>
+      <div class="temp">26°</div>
+      <div class="label">Abends</div>
+    </div>
+    <div class="hourly-box">
+      <div class="icon">🌙</div>
+      <div class="temp">21°</div>
+      <div class="label">Nachts</div>
+    </div>
   </div>
 
-  <div class="radarbox">
-    <label for="radarSelect">🌍 Radar:</label>
-    <select id="radarSelect" onchange="wechselRadar()">
-      <option value="radar">Regen</option>
-      <option value="wind">Wind</option>
-      <option value="clouds">Wolken</option>
-      <option value="temp">Temperatur</option>
-      <option value="pressure">Luftdruck</option>
-    </select>
-    <iframe id="radarFrame" loading="lazy"></iframe>
-  </div>
-</div>
+  <iframe src="https://embed.windy.com/embed2.html?lat=48.88&lon=12.58&detailLat=48.88&detailLon=12.58&width=650&height=450&zoom=8&level=surface&overlay=rain&menu=&message=true&marker=true&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=default&metricTemp=default&radarRange=-1"></iframe>
 
-<script>
-let lat = 48.88, lon = 12.62;
-const iconMap = {
-  0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️", 45: "🌫️", 48: "🌫️",
-  51: "🌦️", 61: "🌧️", 63: "🌧️", 65: "🌧️", 80: "🌧️",
-  71: "❄️", 73: "❄️", 75: "❄️", 95: "🌩️", 99: "🌩️"
-};
+  <script>
+    const forecastDays = [
+      { date: '24.06.', label: 'Heute', icon: '🌞', temp: '27°', alert: true },
+      { date: '25.06.', label: 'Mi', icon: '🌞', temp: '30°' },
+      { date: '26.06.', label: 'Do', icon: '🌧️', temp: '29°' },
+      { date: '27.06.', label: 'Fr', icon: '🌧', temp: '25°' },
+      { date: '28.06.', label: 'Sa', icon: '🌞', temp: '27°' },
+      { date: '29.06.', label: 'So', icon: '🌞', temp: '30°' },
+      { date: '30.06.', label: 'Mo', icon: '⛅', temp: '29°' },
+      { date: '01.07.', label: '', icon: '➡️', temp: '' }
+    ];
 
-function toggleTheme() {
-  const html = document.documentElement;
-  html.dataset.theme = html.dataset.theme === "light" ? "dark" : "light";
-}
-
-function wechselRadar() {
-  const typ = document.getElementById("radarSelect").value;
-  const url = `https://embed.windy.com/embed2.html?lat=${lat}&lon=${lon}&zoom=8&overlay=${typ}`;
-  document.getElementById("radarFrame").src = url;
-}
-
-async function sucheOrt() {
-  const ort = document.getElementById("ortInput").value;
-  if (!ort) return;
-  const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(ort)}&format=json&limit=1`);
-  const j = await r.json();
-  if (j.length > 0) {
-    lat = parseFloat(j[0].lat);
-    lon = parseFloat(j[0].lon);
-    ladeAlles(j[0].display_name.split(",")[0]);
-  }
-}
-
-function nutzeStandort() {
-  navigator.geolocation.getCurrentPosition(pos => {
-    lat = pos.coords.latitude;
-    lon = pos.coords.longitude;
-    ladeAlles("Mein Standort");
-  });
-}
-
-function scrollStunde(dir) {
-  document.getElementById("stunde").scrollBy({ left: dir * 100, behavior: 'smooth' });
-}
-
-async function ladeAlles(name = "") {
-  document.getElementById("region").innerText = `Wetter ${name}`;
-  wechselRadar();
-  ladeWetter();
-  ladeVorhersage();
-  ladeWarnung();
-}
-
-async function ladeWetter() {
-  const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=temperature_2m,precipitation_probability,weathercode&timezone=auto`);
-  const data = await res.json();
-
-  const w = data.current_weather;
-  document.getElementById("zeit").innerText = new Date(w.time).toLocaleString("de-DE");
-  document.getElementById("beschreibung").innerText = `Aktuell ${w.temperature} °C, Wind: ${w.windspeed} km/h`;
-
-  const now = new Date().getHours();
-  const hbox = document.getElementById("stunde");
-  hbox.innerHTML = "";
-  for (let i = 0; i < 24; i++) {
-    const t = data.hourly.time[i].split("T")[1].slice(0,5);
-    const h = parseInt(t);
-    const isNow = h === now;
-    hbox.innerHTML += `<div class='hour ${isNow ? "now" : ""}'>${t}<br>${iconMap[data.hourly.weathercode[i]] || "❔"}<br>${data.hourly.temperature_2m[i]}°<br>${data.hourly.precipitation_probability[i]}%</div>`;
-  }
-  setTimeout(() => {
-    const active = document.querySelector(".hour.now");
-    if (active) active.scrollIntoView({ behavior: 'smooth', inline: 'center' });
-  }, 300);
-}
-
-async function ladeVorhersage() {
-  const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weathercode&timezone=auto`);
-  const d = await res.json();
-  const box = document.getElementById("vorhersage");
-  box.innerHTML = "";
-  for (let i = 0; i < 3; i++) {
-    box.innerHTML += `<div class="tag">${new Date(d.daily.time[i]).toLocaleDateString("de-DE", { weekday: "short" })}<br>${iconMap[d.daily.weathercode[i]] || "❔"}<br>${d.daily.temperature_2m_max[i]}° / ${d.daily.temperature_2m_min[i]}°<br>${d.daily.precipitation_probability_max[i]}%</div>`;
-  }
-}
-
-async function ladeWarnung() {
-  const r = await fetch("https://warnung.bund.de/bbk.mowas/gefahrendurchsagen.json");
-  const j = await r.json();
-  const box = document.getElementById("warnBox");
-  box.innerHTML = "";
-  const warnung = j.warnings?.find(w => w.payload && w.payload.areaDesc?.includes("Bayern"));
-  if (warnung) {
-    box.innerHTML = `<div class="warnung">⚠️ ${warnung.payload.headline}</div>`;
-  }
-}
-
-ladeAlles("Straubing");
-</script>
+    const container = document.getElementById('forecast-container');
+    forecastDays.forEach((day, index) => {
+      const div = document.createElement('div');
+      div.className = 'forecast-day' + (index === 0 ? ' active' : '');
+      div.innerHTML = `
+        <span>${day.label}</span>
+        <span>${day.date}</span>
+        <span class="icon">${day.icon}</span>
+        <span>${day.temp}</span>
+      `;
+      container.appendChild(div);
+    });
+  </script>
 </body>
 </html>
