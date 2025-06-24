@@ -132,8 +132,8 @@
   <h2>14 Tage Vorhersage und 21 Tage im Trend</h2>
 
   <div class="search">
-    <input type="text" placeholder="Ort suchen...">
-    <button>🔍</button>
+    <input id="location-input" type="text" placeholder="Ort suchen...">
+    <button onclick="alert('Diese Funktion ist aktuell nicht verfügbar.')">🔍</button>
   </div>
 
   <div class="forecast-scroll">
@@ -156,36 +156,35 @@
       <span>29°</span>
     </div>
     <div class="forecast-day">
-  <span>Fr</span>
-  <span>27.06.</span>
-  <span class="emoji">🌧</span>
-  <span>25°</span>
-</div>
-<div class="forecast-day">
-  <span>Sa</span>
-  <span>28.06.</span>
-  <span class="emoji">☀️</span>
-  <span>27°</span>
-</div>
-<div class="forecast-day">
-  <span>So</span>
-  <span>29.06.</span>
-  <span class="emoji">☀️</span>
-  <span>30°</span>
-</div>
-<div class="forecast-day">
-  <span>Mo</span>
-  <span>30.06.</span>
-  <span class="emoji">⛅</span>
-  <span>29°</span>
-</div>
-<div class="forecast-day">
-  <span>01.07.</span>
-  <span></span>
-  <span class="emoji">➡️</span>
-  <span></span>
-</div>
-
+      <span>Fr</span>
+      <span>27.06.</span>
+      <span class="emoji">🌧</span>
+      <span>25°</span>
+    </div>
+    <div class="forecast-day">
+      <span>Sa</span>
+      <span>28.06.</span>
+      <span class="emoji">☀️</span>
+      <span>27°</span>
+    </div>
+    <div class="forecast-day">
+      <span>So</span>
+      <span>29.06.</span>
+      <span class="emoji">☀️</span>
+      <span>30°</span>
+    </div>
+    <div class="forecast-day">
+      <span>Mo</span>
+      <span>30.06.</span>
+      <span class="emoji">⛅</span>
+      <span>29°</span>
+    </div>
+    <div class="forecast-day">
+      <span>01.07.</span>
+      <span></span>
+      <span class="emoji">➡️</span>
+      <span></span>
+    </div>
   </div>
 
   <div class="today-box">
@@ -198,7 +197,7 @@
     <div class="now">
       <div class="emoji">🌞</div>
       <div class="temp">22°</div>
-      <small>Jetzt 10:23 Uhr<br>fühlt sich wärmer an</small>
+      <small>Jetzt <span id="current-time"></span> Uhr<br>fühlt sich wärmer an</small>
     </div>
   </div>
 
@@ -236,5 +235,12 @@
   </div>
 
   <iframe src="https://embed.windy.com/embed2.html?lat=48.88&lon=12.58&detailLat=48.88&detailLon=12.58&width=650&height=450&zoom=8&level=surface&overlay=rain&menu=&message=true&marker=true&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=default&metricTemp=default&radarRange=-1"></iframe>
+
+  <script>
+    const now = new Date();
+    const hours = now.getHours().toString().padStart(2, '0');
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    document.getElementById("current-time").textContent = `${hours}:${minutes}`;
+  </script>
 </body>
 </html>
